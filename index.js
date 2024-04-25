@@ -6,6 +6,7 @@ import env from "dotenv";
 const app=express();
 const port=3000;
 env.config();
+var title,content,likes,length
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
@@ -38,11 +39,9 @@ const db = new pg.Client({
       console.log(result)
       if (result.rows.length > 0) {
         const user = result.rows[0];
-        const storedPassword = user.password;
-  
+        const storedPassword = user.password;  
         if (password === storedPassword) {
         res.redirect("/blog")    
-        
         } else {
           res.render("login.ejs",{msg:"Incorrect Password. Try again"});
         }
@@ -53,6 +52,24 @@ const db = new pg.Client({
       console.log(err);
     }
   });
+
+  app.get("/modify/:id",(req,res)=>{
+    var id=req.params.id;
+    console.log(id)
+    res.render("modify.ejs",{title:title[id],content:content[id],id:id})
+  })
+  
+  app.post("/update/:id",async(req,res)=>{
+    var id=req.params.id
+    title[id]=req.body.title
+    content[id]=req.body.content
+    const result = await db.query("UPDATE users SET title = $1 WHERE email=$2;",
+        [title, email]);
+    const resul = await db.query("UPDATE users SET content=$1 WHERE email=$2;",
+          [content, email]);
+      res.redirect("/blog")
+
+  })
 
   app.get("/new",(req,res)=>{
     res.render("add.ejs")
@@ -68,7 +85,7 @@ const db = new pg.Client({
           [0, email]);
       res.redirect("/blog")
   })
-var title,content,likes,length
+
   app.get("/blog",async(req,res)=>{
     title=await db.query("SELECT title FROM users WHERE email=$1",[email]);
     content=await db.query("SELECT content FROM users WHERE email=$1",[email]);

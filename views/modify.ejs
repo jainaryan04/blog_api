@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Blog</title>
+</head>
+<body>
+  <div class="container">
+    <h1>Modify post</h1>
+    <form id="editForm" method="post" action="/update/<%=id%>">
+        <input type="text" name="title" value="<%=title %>">
+        <textarea name="content" rows="10"><%=content %></textarea>
+        <button class="full-width" type="submit"> Update</button>
+      </form>
+  </div>
+</body>
+</html>
