@@ -3,11 +3,13 @@ import bodyParser from "body-parser"
 import pg from "pg"
 import env from "dotenv";
 
-env.config();
-const HOST_URL = "http://localhost:4000";
-const port=3000;
 const app=express();
+const port=3000;
+env.config();
+
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static("public"));
+
 const db = new pg.Client({
     user: process.env.PG_USER,
     host: process.env.PG_HOST,
@@ -26,57 +28,21 @@ const db = new pg.Client({
   app.get("/register", (req, res) => {
     res.render("register.ejs");
   });
-
-  app.post("/register", async(req,res)=> {
-    const email = req.body.email;
-    const password = req.body.password;
-  
-    try {
-      const checkResult = await db.query("SELECT * FROM users WHERE email = $1", [
-        email,
-      ]);
-  
-      if (checkResult.rows.length > 0) {
-        res.render("login.ejs",{msg:"Email aldready exists. Try logging in"});
-      } else {
-        const result = await db.query(
-          "INSERT INTO users (email, password) VALUES ($1, $2)",
-          [email, password]
-        );
-        console.log(result);
-        try {
-            const response = await axios.get(`${HOST_URL}/posts`);
-            console.log(response);
-            res.render("blog.ejs", { posts: response.data });
-          } catch (error) {
-            res.status(500).json({ message: "Error fetching posts" });
-          }
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  });
-  
+  var email;var password;
   app.post("/login", async (req, res) => {
-    const email = req.body.email;
-    const password = req.body.password;
-  
+    email = req.body.email;
+    password = req.body.password;
+    console.log(email)
     try {
-      const result = await db.query("SELECT * FROM users WHERE email = $1", [
-        email,
-      ]);
+      const result = await db.query("SELECT * FROM users WHERE email=$1", [email]);
+      console.log(result)
       if (result.rows.length > 0) {
         const user = result.rows[0];
         const storedPassword = user.password;
   
         if (password === storedPassword) {
-            try {
-                const response = await axios.get(`${HOST_URL}/posts`);
-                console.log(response);
-                res.render("blog.ejs", { posts: response.data });
-              } catch (error) {
-                res.status(500).json({ message: "Error fetching posts" });
-              }
+        res.redirect("/blog")    
+        
         } else {
           res.render("login.ejs",{msg:"Incorrect Password. Try again"});
         }
@@ -88,7 +54,28 @@ const db = new pg.Client({
     }
   });
 
+  app.get("/new",(req,res)=>{
+    res.render("add.ejs")
+  })
+
+  app.post("/new",async(req,res)=>{
+    
+    const result = await db.query("UPDATE users SET title = ARRAY_APPEND(title, $1) WHERE email=$2;",
+        [req.body.title, email]);
+    const resul = await db.query("UPDATE users SET content = ARRAY_APPEND(content, $1) WHERE email=$2;",
+          [req.body.content, email]);    
+      res.redirect("/blog")
+  })
+var title,content
+  app.get("/blog",async(req,res)=>{
+    title=await db.query("SELECT title FROM users WHERE email=$1",[email]);
+    content=await db.query("SELECT content FROM users WHERE email=$1",[email]);
+    console.log(title.rows[0].title)
+    console.log(title.rows[0].title.length)
+    res.render("blog.ejs",{title:title.rows[0].title,email:email,length:title.rows[0].title.length,content:content.rows[0].content})
+  })
+
+
   app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
   });
-

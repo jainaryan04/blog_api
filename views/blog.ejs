@@ -13,19 +13,22 @@
     <h1><%=locals.email%>'s Blog</h1>
     <a id="newPostBtn" href="/new">Add Post</a>
     <ul id="postsList">
-      <% posts.forEach(post=> { %>
+      <% let i = 0; %>
+      <% while (locals.length > 0) { %>
         <li>
           <h2>
-            <%=post.title%>
+            <%= title[i] %>
           </h2>
           <p>
-            <%=post.content%>
+            <small><%= content[i] %></small>
           </p>
+          <% i = i + 1; %>
+          <% locals.length = locals.length - 1; %>
+          
         </li>
-        <% }); %>
+      <% } %>
     </ul>
   </div>
-
 </body>
 
 </html>
